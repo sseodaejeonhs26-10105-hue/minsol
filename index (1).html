@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>비밀 공부 일기</title>
+<style>
+  *{box-sizing:border-box}body{margin:0;background:#f4f1fb;color:#302c43;font:16px/1.65 system-ui,sans-serif}main{max-width:720px;margin:40px auto;padding:0 20px}h1{font-size:30px;margin-bottom:0}h2{font-size:21px;margin-top:0}.sub,small{color:#70697e}section{background:white;border:1px solid #e5dff0;border-radius:20px;padding:24px;margin:20px 0;box-shadow:0 6px 25px #302c4305}label{display:block;margin:12px 0}input,select,textarea,button{font:inherit}input,select,textarea{display:block;width:100%;padding:10px;border:1px solid #cec5de;border-radius:9px;background:#fff;color:inherit}textarea{min-height:140px;resize:vertical}button{background:#7253ab;color:white;border:0;border-radius:10px;padding:11px 17px;cursor:pointer;margin:5px 5px 5px 0}button.secondary{background:#ede7f7;color:#533b7b}button:disabled{opacity:.5;cursor:default}.row{display:flex;gap:16px}.row>*{flex:1;min-width:0}.task{display:flex;align-items:center;gap:12px;padding:10px;background:#f8f6fc;border-radius:9px}.task input{width:21px;height:21px;flex-shrink:0}.notice{padding:14px;border-radius:10px;background:#f0eaf9;white-space:pre-wrap}.error{color:#a12f4f}progress{width:100%;accent-color:#7253ab;height:18px}.entry{border-top:1px solid #eee;padding:15px 0}.entry p{white-space:pre-wrap;overflow-wrap:anywhere}details{margin:14px 0}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:7px;border-bottom:1px solid #eee}[hidden]{display:none!important}@media(max-width:480px){main{margin-top:20px}.row{display:block}section{padding:18px}}
+</style>
+<main>
+  <h1>📒 비밀 공부 일기</h1>
+  <p class="sub">오늘의 작은 공부와 마음을 차곡차곡.</p>
+  <p id="message" role="status" aria-live="polite"></p>
+  <section id="gate">
+    <h2 id="gateTitle">나만의 일기장 만들기</h2>
+    <p>비밀번호로 학습 정보와 일기를 암호화합니다.</p>
+    <form id="unlockForm">
+      <label>비밀번호 (8자 이상)<input id="password" type="password" minlength="8" required autocomplete="current-password"></label>
+      <label id="confirmation">비밀번호 확인<input id="passwordAgain" type="password" minlength="8" autocomplete="new-password"></label>
+      <button id="unlockButton">일기장 열기</button>
+    </form>
+    <small>비밀번호를 잊으면 복구할 수 없습니다. 기록은 이 브라우저에만 저장되며, 브라우저 데이터를 삭제하면 사라집니다.</small>
+  </section>
+  <div id="app" hidden>
+    <button id="lock" class="secondary">🔒 잠그기</button>
+    <section id="courseSection">
+      <h2>시험 준비하기</h2>
+      <form id="courseForm">
+        <label>과목<input name="subject" required maxlength="50" placeholder="수학"></label>
+        <label>시험 범위<input name="scope" required maxlength="200" placeholder="교과서 1~3단원, 1~60쪽"></label>
+        <div class="row">
+          <label>전체 공부 분량<input name="total" type="number" min="1" max="10000" step="1" required placeholder="60"></label>
+          <label>분량 단위<select name="unit"><option>쪽</option><option>문제</option><option>단원</option></select></label>
+        </div>
+        <div class="row">
+          <label>시험 날짜<input id="examDate" name="exam" type="date" required></label>
+          <label>한 단위당 예상 시간 (분)<input name="minutesPerUnit" type="number" min="1" max="600" value="5" required></label>
+        </div>
+        <button>시험 정보 저장</button>
+      </form>
+    </section>
+    <section id="studySection" hidden>
+      <h2 id="courseTitle"></h2><p id="courseInfo" class="sub"></p>
+      <progress id="progress" max="100" value="0" aria-label="전체 학습 진도"></progress>
+      <p id="progressText"></p>
+      <form id="planForm">
+        <div class="row">
+          <label>오늘의 컨디션<select name="condition"><option value="1.2">좋음 😊</option><option value="1" selected>보통 🙂</option><option value="0.7">피곤함 😴</option></select></label>
+          <label>오늘 공부 가능 시간 (분)<input name="available" type="number" min="1" max="1440" value="120" required></label>
+        </div>
+        <button>오늘 계획 만들기</button>
+      </form>
+      <div id="todayPlan"></div>
+      <details id="forecast"><summary>남은 날짜별 계획 보기</summary><p class="sub">오늘 입력한 시간과 컨디션이 앞으로도 같다고 가정합니다. 시험 당일은 제외합니다.</p><div id="forecastBody"></div></details>
+      <button id="newCourse" class="secondary">새 시험 시작하기</button>
+    </section>
+    <section>
+      <h2>오늘의 마음 기록</h2>
+      <form id="diaryForm">
+        <label>오늘 공부한 내용, 느낀 점, 고민<textarea id="diary" required maxlength="10000" placeholder="한 줄만 적어도 좋아요."></textarea></label>
+        <button>일기 저장 · 오늘 공부 마무리</button>
+      </form>
+      <p id="encouragement" class="notice" hidden></p>
+      <small>공부를 마무리하면 오늘의 체크가 확정되고, 남은 분량을 다음 날부터 다시 나눕니다. 일기는 다시 수정할 수 있어요.</small>
+    </section>
+    <section><h2>지난 기록</h2><div id="history"></div></section>
+  </div>
+  <p class="sub"><small>간단한 규칙 기반 버전입니다. 외부 AI 연결 없이 남은 기간·시간·컨디션으로 계산하며, 입력 내용은 서버로 보내지 않습니다.</small></p>
+</main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const STORAGE = 'secret-study-diary-v1';
+let state, key, salt, busy = false, sessionDay;
+const dateKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const dayNumber = s => { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y,m-1,d)/86400000; };
+const daysUntil = s => dayNumber(s)-dayNumber(dateKey());
+const b64 = a => btoa(String.fromCharCode(...a));
+const bytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+function tell(text, error=false) { $('message').textContent=text; $('message').className=error?'error':'notice'; }
+async function makeKey(password, saltValue) {
+  const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:saltValue,iterations:250000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function save() {
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(state))));
+  // Convert in chunks so long diaries do not exceed the argument limit.
+  let encoded=''; for(let i=0;i<ciphertext.length;i+=8192) encoded+=String.fromCharCode(...ciphertext.subarray(i,i+8192));
+  localStorage.setItem(STORAGE,JSON.stringify({salt:b64(salt),iv:b64(iv),data:btoa(encoded)}));
+}
+function on(id,event,action) {
+  $(id).addEventListener(event,async e=>{
+    e.preventDefault(); if(busy)return; busy=true;
+    const previous=state?JSON.stringify(state):null;
+    document.querySelectorAll('button').forEach(b=>b.disabled=true);
+    try {
+      if(state && dateKey()!==sessionDay) { sessionDay=dateKey(); render(); throw Error('날짜가 바뀌었어요. 새 날짜의 화면에서 다시 진행해 주세요.'); }
+      await action(e);
+    } catch(err) {
+      if(previous)state=JSON.parse(previous);
+      if(event==='change')render();
+      tell(err.message || '저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.',true);
+    } finally {busy=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);}
+  });
+}
+function gate() {
+  const exists=!!localStorage.getItem(STORAGE);
+  $('gateTitle').textContent=exists?'비밀 일기장 열기':'나만의 일기장 만들기';
+  $('confirmation').hidden=exists; $('passwordAgain').required=!exists;
+  $('password').autocomplete=exists?'current-password':'new-password';
+  const next=new Date();next.setDate(next.getDate()+1);$('examDate').min=dateKey(next);
+}
+on('unlockForm','submit',async()=>{
+  if(!crypto.subtle)throw Error('암호화 기능이 필요합니다. 안내 파일의 localhost 실행 방법을 사용해 주세요.');
+  const stored=localStorage.getItem(STORAGE), password=$('password').value;
+  if(!stored && password!==$('passwordAgain').value)throw Error('비밀번호가 서로 달라요. 다시 확인해 주세요.');
+  if(stored) {
+    try {
+      const vault=JSON.parse(stored);salt=bytes(vault.salt);key=await makeKey(password,salt);
+      state=JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes(vault.iv)},key,bytes(vault.data))));
+    } catch {state=null;key=null;throw Error('비밀번호가 틀렸거나 저장된 기록을 읽을 수 없어요.');}
+  } else {
+    salt=crypto.getRandomValues(new Uint8Array(16)); key=await makeKey(password,salt);
+    state={course:null,plans:{},entries:{}};
+    try {await save();}catch(err){state=null;key=null;throw err;}
+  }
+  sessionDay=dateKey();$('unlockForm').reset();$('gate').hidden=true;$('app').hidden=false;
+  render();tell('일기장을 열었어요. 오늘도 내 속도로 시작해 봐요.');
+});
+on('lock','click',()=>{state=null;key=null;salt=null;$('app').hidden=true;$('gate').hidden=false;$('diary').value='';$('history').replaceChildren();$('todayPlan').replaceChildren();$('encouragement').textContent='';gate();tell('일기장을 잠갔어요.');});
+on('courseForm','submit',async()=>{
+  const f=new FormData($('courseForm'));
+  if(!f.get('subject').trim() || !f.get('scope').trim())throw Error('과목과 시험 범위를 입력해 주세요.');
+  if(daysUntil(f.get('exam'))<1)throw Error('시험 날짜를 내일 이후로 선택해 주세요.');
+  state.course={subject:f.get('subject').trim(),scope:f.get('scope').trim(),total:Number(f.get('total')),unit:f.get('unit'),exam:f.get('exam'),minutesPerUnit:Number(f.get('minutesPerUnit')),done:0};
+  state.plans={};await save();render();tell('시험 정보를 저장했어요. 오늘의 상태를 입력해 주세요.');
+});
+on('planForm','submit',async()=>{
+  const c=state.course,days=daysUntil(c.exam),remaining=c.total-c.done;
+  if(days<1)throw Error('시험 당일이거나 시험이 끝났어요. 새 시험을 등록해 주세요.');
+  if(remaining<=0)throw Error('전체 범위를 모두 마쳤어요!');
+  if(state.plans[dateKey()])throw Error('오늘 계획은 이미 만들어졌어요.');
+  const f=new FormData($('planForm')),available=Number(f.get('available')),condition=Number(f.get('condition'));
+  const capacity=Math.floor(available/c.minutesPerUnit*condition);
+  if(capacity<1)throw Error('한 단위를 공부할 시간이 부족해요. 공부 시간을 늘리거나 예상 시간을 확인해 주세요.');
+  const target=Math.min(remaining,capacity,Math.max(1,Math.ceil(remaining/days*condition)));
+  const tasks=[];let offset=0;const size=Math.ceil(target/5);
+  while(offset<target){const amount=Math.min(size,target-offset);tasks.push({from:c.done+offset+1,to:c.done+offset+amount,amount,done:false});offset+=amount;}
+  state.plans[dateKey()]={tasks,target,available,condition,capacity,closed:false};
+  await save();render();tell('오늘 계획을 만들었어요. 순서대로 공부하고 체크해 주세요.');
+});
+on('todayPlan','change',async e=>{
+  const index=Number(e.target.dataset.index),p=state.plans[dateKey()];
+  if(!p || p.closed || !Number.isInteger(index) || !p.tasks[index])return;
+  const t=p.tasks[index];t.done=e.target.checked;state.course.done+=t.done?t.amount:-t.amount;
+  await save();render();tell(p.tasks.every(t=>t.done)?'🎉 오늘 목표 달성! 정말 수고했어요.':'완료한 분량을 저장했어요.');
+});
+function encouragement(text,achieved){
+  if(/불안|걱정|힘들|지쳤|피곤/.test(text))return '마음이 무거운 날에도 오늘을 기록해 줘서 고마워. 잠깐 쉬어 가도 괜찮아. 네 속도로 한 걸음씩 가 보자.';
+  return achieved?'오늘 목표 달성! 스스로와의 약속을 지킨 너, 정말 멋져. 오늘의 작은 성공을 기억해 줘.':'오늘 해낸 만큼도 소중해. 다 못 했어도 괜찮아. 내일 다시 작은 한 걸음부터 시작하자.';
+}
+on('diaryForm','submit',async()=>{
+  const text=$('diary').value.trim();if(!text)throw Error('오늘 한 공부를 한 줄이라도 적어 주세요.');
+  const p=state.plans[dateKey()],achieved=!!p&&p.tasks.every(t=>t.done);
+  if(p)p.closed=true;
+  let message=encouragement(text,achieved);
+  if(p&&!achieved)message+=daysUntil(state.course.exam)>1?' 남은 분량은 내일부터의 계획에 나누어 반영했어.':' 남은 공부일이 없어. 남은 범위를 확인하고 중요한 내용부터 정리해 보자.';
+  state.entries[dateKey()]={text,message,result:p?`${p.tasks.filter(t=>t.done).reduce((sum,t)=>sum+t.amount,0)} / ${p.target}${state.course.unit}`:'자유 일기'};
+  await save();render();tell('일기를 저장했어요. 오늘도 수고했어요.');
+});
+on('newCourse','click',async()=>{
+  if(!confirm('현재 시험과 학습 진도를 지우고 새 시험을 시작할까요? 지난 일기는 보관됩니다.'))return;
+  state.course=null;state.plans={};await save();render();tell('새 시험 정보를 입력해 주세요.');
+});
+function render() {
+  const c=state.course,p=state.plans[dateKey()],entry=state.entries[dateKey()];
+  $('courseSection').hidden=!!c;$('studySection').hidden=!c;
+  $('diary').value=entry?.text||'';$('encouragement').hidden=!entry;$('encouragement').textContent=entry?.message||'';
+  $('todayPlan').replaceChildren();$('forecastBody').replaceChildren();
+  if(c){
+    $('courseTitle').textContent=`${c.subject} · 오늘의 공부`;
+    $('courseInfo').textContent=`${c.scope} | 시험 ${c.exam} | ${Math.max(0,daysUntil(c.exam))}일 남음`;
+    $('progress').value=c.done/c.total*100;$('progressText').textContent=`전체 ${c.total}${c.unit} 중 ${c.done}${c.unit} 완료`;
+    $('planForm').hidden=!!p||c.done>=c.total||daysUntil(c.exam)<1;
+    if(p){
+      const title=document.createElement('h3');title.textContent=p.closed?'오늘 공부 마무리 완료':`오늘 목표 ${p.target}${c.unit}`;$('todayPlan').append(title);
+      p.tasks.forEach((t,i)=>{
+        const label=document.createElement('label');label.className='task';
+        const input=document.createElement('input');input.type='checkbox';input.checked=t.done;input.disabled=p.closed;input.dataset.index=i;
+        label.append(input,document.createTextNode(`${i+1}번째 공부 · 남은 범위에서 ${t.amount}${c.unit}`));$('todayPlan').append(label);
+      });
+      const note=document.createElement('p');note.className='sub';note.textContent=`${p.available}분 기준 · 컨디션 반영 · ${p.tasks.every(t=>t.done)?'🎉 오늘 목표 달성!':'아직 공부하지 않은 범위에서 분량을 골라 공부해요.'}`;$('todayPlan').append(note);
+    }
+    const days=Math.max(0,daysUntil(c.exam)-1),pending=p&&!p.closed?p.tasks.filter(t=>!t.done).reduce((sum,t)=>sum+t.amount,0):0;
+    const remaining=Math.max(0,c.total-c.done-pending);
+    $('forecast').hidden=!p;
+    if(p){
+      const info=document.createElement('p');info.textContent=days?`내일부터 남은 ${remaining}${c.unit}을 ${days}일에 나눕니다.`:`내일부터 시험 전까지 남은 공부일이 없어요. 남은 분량: ${remaining}${c.unit}.`;$('forecastBody').append(info);
+      if(days&&Math.ceil(remaining/days)>p.capacity){const warning=document.createElement('p');warning.className='error';warning.textContent='하루 필요 분량이 현재 시간으로 가능한 분량보다 많아요. 공부 시간을 늘리거나 범위를 조정해 주세요.';$('forecastBody').append(warning);}
+      const table=document.createElement('table');const head=table.createTHead().insertRow();['날짜','예정 분량'].forEach(s=>{const th=document.createElement('th');th.textContent=s;head.append(th);});
+      // Show a week at a time; the same even distribution applies to every remaining day.
+      for(let i=0;i<Math.min(days,7);i++){const d=new Date();d.setDate(d.getDate()+i+1);const row=table.insertRow();row.insertCell().textContent=dateKey(d);row.insertCell().textContent=`${Math.floor(remaining/days)+(i<remaining%days?1:0)}${c.unit}`;}
+      if(days)$('forecastBody').append(table);
+      if(days>7){const more=document.createElement('p');more.textContent=`이후 ${days-7}일에도 같은 방식으로 분배합니다.`;$('forecastBody').append(more);}
+    }
+  }
+  $('history').replaceChildren();
+  const entries=Object.entries(state.entries).sort(([a],[b])=>b.localeCompare(a));
+  if(!entries.length)$('history').textContent='아직 기록이 없어요. 오늘의 한 줄을 남겨 보세요.';
+  for(const [date,e] of entries){const article=document.createElement('article');article.className='entry';const title=document.createElement('strong');title.textContent=`${date} · ${e.result}`;const body=document.createElement('p');body.textContent=e.text;const message=document.createElement('p');message.className='notice';message.textContent=e.message;article.append(title,body,message);$('history').append(article);}
+}
+gate();
+</script>
+</html>
